@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/", label: "Today", icon: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
   { href: "/board", label: "Board", icon: "M4 5h4v14H4zM10 5h4v9h-4zM16 5h4v12h-4z" },
   { href: "/list", label: "List", icon: "M4 6h16M4 12h16M4 18h16" },
+  { href: "/companies", label: "Companies", icon: "M4 21V8l8-5 8 5v13M9 21v-6h6v6M8 11h.01M12 11h.01M16 11h.01" },
   { href: "/stats", label: "Stats", icon: "M5 20V10M12 20V4M19 20v-7" },
 ];
 
@@ -20,7 +21,7 @@ function Icon({ d }: { d: string }) {
 
 export function Nav({ logout }: { logout: React.ReactNode }) {
   const path = usePathname();
-  const addHref = ITEMS.some((i) => i.href === path) ? `/new?from=${encodeURIComponent(path)}` : "/new";
+  const addHref = ["/", "/board", "/list", "/stats"].includes(path) ? `/new?from=${encodeURIComponent(path)}` : "/new";
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   return (
     <>
@@ -45,7 +46,7 @@ export function Nav({ logout }: { logout: React.ReactNode }) {
 
       {/* Phone: bottom tabs and a floating add button */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-line bg-surface safe-bottom">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {ITEMS.map((i) => (
             <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined}
               className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold ${active(i.href) ? "text-accent" : "text-muted"}`}>

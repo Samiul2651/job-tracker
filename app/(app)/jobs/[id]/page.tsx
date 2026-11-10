@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { updateJobAction } from "@/app/actions";
 import { ByClaude, JobMeta, PageTitle, StatusChip } from "@/components/JobBits";
 import { DeleteButton, NoteForm, StatusPicker } from "@/components/JobDetailClient";
+import { ShortlistButton } from "@/components/CompanyBits";
+import { isShortlisted } from "@/lib/companies";
 import { JobForm } from "@/components/JobForm";
 import { getDb } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
@@ -44,6 +46,7 @@ export default async function JobPage({ params, searchParams }: Props) {
     );
   }
 
+  const shortlisted = await isShortlisted(getDb(), job.company).catch(() => false);
   const href = job.url ? safeHref(job.url) : null;
   const facts: [string, string | null][] = [
     ["Applied on", job.applied_on && fmtDate(job.applied_on)],
@@ -93,7 +96,11 @@ export default async function JobPage({ params, searchParams }: Props) {
           </section>
         </div>
         <aside className="space-y-4">
-          <div className="card p-4"><StatusPicker id={job.id} status={job.status} /></div>
+          <div className="card space-y-3 p-4">
+            <StatusPicker id={job.id} status={job.status} />
+            <ShortlistButton company={job.company} initial={shortlisted} />
+            <Link href="/companies" className="block text-center text-xs text-muted hover:text-ink">See company shortlist</Link>
+          </div>
           <DeleteButton id={job.id} />
         </aside>
       </div>

@@ -1,8 +1,9 @@
-// The MCP server: 8 tools that Claude can call. Each one is a thin wrapper
+// The MCP server: 10 tools that Claude can call. Each one is a thin wrapper
 // around lib/jobs.ts and records its writes as done by "claude".
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Db } from "./db";
+import * as companies from "./companies";
 import * as jobs from "./jobs";
 import { STATUSES, WORK_MODES, YES_NO } from "./schema";
 
@@ -36,7 +37,7 @@ async function run(fn: () => Promise<unknown>) {
     const message =
       e instanceof z.ZodError ? e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")
       : e instanceof jobs.NotFoundError ? e.message
-      : e instanceof Error && /Unknown status|Note text/.test(e.message) ? e.message
+      : e instanceof Error && /Unknown status|Note text|Company name/.test(e.message) ? e.message
       : "Something went wrong while talking to the tracker.";
     if (!(e instanceof z.ZodError) && !(e instanceof jobs.NotFoundError)) console.error("[mcp]", e);
     return { isError: true, content: [{ type: "text" as const, text: message }] };
@@ -162,6 +163,30 @@ export function buildMcpServer(db: Db): McpServer {
       annotations: { readOnlyHint: true },
     },
     (args) => run(() => jobs.getStats(db, args)),
+  );
+
+  server.registerTool(
+    "shortlist_company",
+    {
+      title: "Shortlist company",
+      description: "Add a company to the company shortlist (a separate list of companies worth following). Adding one that is already there keeps it and updates the note if given.",
+      inputSchema: { name: z.string().min(1), note: z.string().optional().describe("Why it is worth following") },
+    },
+    ({ name, note }) => run(() => companies.shortlistCompany(db, name, note, "claude")),
+  );
+
+  server.registerTool(
+    "list_shortlisted_companies",
+    {
+      title: "List shortlisted companies",
+      description: "List the company shortlist, with each company's note and the jobs tracked there.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    () => run(async () => {
+      const list = await companies.listShortlist(db);
+      return { count: list.length, companies: list };
+    }),
   );
 
   return server;

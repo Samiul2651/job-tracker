@@ -9,15 +9,16 @@ The app has no AI inside. Claude connects to it through an MCP server, so it can
 | --- | --- | --- |
 | Shared core | `lib/jobs.ts` | All job rules. The app and the MCP tools both call it. |
 | Field checks | `lib/schema.ts` | Zod schemas for every field |
-| MCP server | `lib/mcp.ts`, `app/api/mcp/route.ts` | 8 tools for Claude, protected by a secret token |
-| Screens | `app/(app)/` | Today, Board, List, Job detail, Stats, Add job |
+| MCP server | `lib/mcp.ts`, `app/api/mcp/route.ts` | 10 tools for Claude, protected by a secret token |
+| Screens | `app/(app)/` | Today, Board, List, Companies, Job detail, Stats, Add job |
 | Database | `supabase/migrations/0001_init.sql` | Two tables: `jobs` and `job_events` |
 | Keep-alive | `.github/workflows/keep-alive.yml` | Daily ping so the free database is not paused |
-| Tests | `tests/jobs.test.ts` | 16 tests for the rules, run against an in-memory Postgres |
+| Company shortlist | `lib/companies.ts`, `app/(app)/companies` | Companies to follow; the table is created automatically on first use |
+| Tests | `tests/` | Tests for the rules, run against an in-memory Postgres |
 
 ## MCP tools
 
-`add_job`, `find_jobs`, `get_job`, `update_job`, `set_status`, `add_note`, `due_followups`, `get_stats`.
+`add_job`, `find_jobs`, `get_job`, `update_job`, `set_status`, `add_note`, `due_followups`, `get_stats`, `shortlist_company`, `list_shortlisted_companies`.
 There is no delete tool: only you can delete, from the app.
 
 ## Rules the tracker follows

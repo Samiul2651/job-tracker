@@ -133,3 +133,40 @@ export async function deleteJobAction(id: string): Promise<void> {
   refresh();
   redirect("/list");
 }
+
+export async function setShortlistAction(company: string, on: boolean): Promise<FormState> {
+  await requireAuth();
+  const { shortlistCompany, unshortlistCompany } = await import("@/lib/companies");
+  try {
+    if (on) await shortlistCompany(getDb(), company, null, "me");
+    else await unshortlistCompany(getDb(), company);
+  } catch (e) {
+    return { error: e instanceof Error && /Company name/.test(e.message) ? e.message : errorText(e) };
+  }
+  refresh();
+}
+
+export async function addCompanyAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAuth();
+  const { shortlistCompany } = await import("@/lib/companies");
+  const name = String(formData.get("name") ?? "");
+  const note = String(formData.get("note") ?? "");
+  if (!name.trim()) return { error: "Type a company name." };
+  try {
+    await shortlistCompany(getDb(), name, note, "me");
+  } catch (e) {
+    return { error: errorText(e) };
+  }
+  refresh();
+}
+
+export async function saveCompanyNoteAction(company: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAuth();
+  const { updateCompanyNote } = await import("@/lib/companies");
+  try {
+    await updateCompanyNote(getDb(), company, String(formData.get("note") ?? ""));
+  } catch (e) {
+    return { error: errorText(e) };
+  }
+  refresh();
+}
