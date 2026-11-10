@@ -13,9 +13,9 @@ jobs:
     steps:
       - name: Ping health route
         env:
-          APP_URL: ${{ vars.APP_URL }}
+          APP_URL: ${{ vars.APP_URL || 'https://job-tracker-steel-phi.vercel.app' }}
         run: |
           if [ -z "$APP_URL" ]; then
-            echo "Set the repository variable APP_URL (for example https://your-app.vercel.app)"; exit 1
+            echo "APP_URL is empty"; exit 1
           fi
           curl --fail --silent --show-error --max-time 30 "$APP_URL/api/health"

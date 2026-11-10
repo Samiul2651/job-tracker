@@ -66,7 +66,7 @@ Treat that URL like a password. To change it, change `MCP_TOKEN` in Vercel and r
 
 ### 4. Keep the database awake
 
-In the GitHub repo, open **Settings > Secrets and variables > Actions > Variables** and add `APP_URL` = `https://YOUR-APP.vercel.app`.
+The workflow pings this app's live address. If the address changes, set the repository variable `APP_URL` (**Settings > Secrets and variables > Actions > Variables**) to the new one.
 The workflow then calls `/api/health` once a day.
 
 ## Run on your own computer
