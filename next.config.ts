@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Every page shows live job data, so nothing is cached or prerendered.
+  cacheComponents: false,
   turbopack: {
     rules: {
       "*.css": {

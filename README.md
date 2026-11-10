@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Tracker
 
-## Getting Started
+A personal job application tracker that works on phone and laptop.
+The app has no AI inside. Claude connects to it through an MCP server, so it can add and update jobs from chat.
 
-First, run the development server:
+## What is in here
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Part | Where | What it does |
+| --- | --- | --- |
+| Shared core | `lib/jobs.ts` | All job rules. The app and the MCP tools both call it. |
+| Field checks | `lib/schema.ts` | Zod schemas for every field |
+| MCP server | `lib/mcp.ts`, `app/api/mcp/route.ts` | 8 tools for Claude, protected by a secret token |
+| Screens | `app/(app)/` | Today, Board, List, Job detail, Stats, Add job |
+| Database | `supabase/migrations/0001_init.sql` | Two tables: `jobs` and `job_events` |
+| Keep-alive | `.github/workflows/keep-alive.yml` | Daily ping so the free database is not paused |
+| Tests | `tests/jobs.test.ts` | 16 tests for the rules, run against an in-memory Postgres |
+
+## MCP tools
+
+`add_job`, `find_jobs`, `get_job`, `update_job`, `set_status`, `add_note`, `due_followups`, `get_stats`.
+There is no delete tool: only you can delete, from the app.
+
+## Rules the tracker follows
+
+- The same link is never saved twice. Adding it again returns the existing job.
+- The first time a job leaves **Saved**, `applied_on` is set to today.
+- Moving to **Applied** sets a follow-up 7 days later (if none is set).
+- Closing a job (offer, rejected, ghosted, withdrawn) clears the follow-up.
+- Everything Claude writes is tagged "by Claude" in the app.
+
+## Set up (about 15 minutes, all free)
+
+### 1. Database (Supabase)
+
+1. Create a project at supabase.com.
+2. Open **SQL Editor**, paste the contents of `supabase/migrations/0001_init.sql`, and run it.
+3. Open **Connect** and copy the **Transaction pooler** connection string (port 6543). Put your database password into it. This is `DATABASE_URL`.
+
+### 2. App (Vercel)
+
+1. Import this repo at vercel.com.
+2. Add these environment variables:
+
+| Name | Value |
+| --- | --- |
+| `DATABASE_URL` | The connection string from step 1 |
+| `APP_PASSWORD` | The password you will type to open the app |
+| `SESSION_SECRET` | Long random text, e.g. from `openssl rand -hex 32` |
+| `MCP_TOKEN` | Another long random text (24+ characters) |
+| `APP_TIMEZONE` | `Asia/Dhaka` |
+
+3. Deploy. Open the site, log in, and add a job to check it works.
+4. On your phone, open the site and choose **Add to Home screen**.
+
+### 3. Connect Claude
+
+In Claude, open **Settings > Connectors > Add custom connector** and use this URL:
+
+```
+https://YOUR-APP.vercel.app/api/mcp?key=YOUR_MCP_TOKEN
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then ask Claude: "Add this job to my tracker" and paste a job post.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Treat that URL like a password. To change it, change `MCP_TOKEN` in Vercel and redeploy.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Keep the database awake
 
-## Learn More
+In the GitHub repo, open **Settings > Secrets and variables > Actions > Variables** and add `APP_URL` = `https://YOUR-APP.vercel.app`.
+The workflow then calls `/api/health` once a day.
 
-To learn more about Next.js, take a look at the following resources:
+## Run on your own computer
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+cp .env.example .env.local   # then fill in the values
+npm install
+npm run dev
+npm test
+```
