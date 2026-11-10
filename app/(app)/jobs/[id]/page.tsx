@@ -6,7 +6,7 @@ import { DeleteButton, NoteForm, StatusPicker } from "@/components/JobDetailClie
 import { JobForm } from "@/components/JobForm";
 import { getDb } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
-import { NotFoundError, getJob } from "@/lib/jobs";
+import { NotFoundError, getJob, listFacets } from "@/lib/jobs";
 import { STATUS_LABEL, type JobEvent } from "@/lib/schema";
 
 function eventText(e: JobEvent): string {
@@ -34,10 +34,12 @@ export default async function JobPage({ params, searchParams }: Props) {
   const { job, events } = data;
 
   if (edit) {
+    const facets = await listFacets(getDb());
     return (
       <div className="max-w-2xl">
         <PageTitle title={`Edit ${job.company}`} />
-        <JobForm action={updateJobAction.bind(null, job.id)} job={job} cancelHref={`/jobs/${job.id}`} />
+        <JobForm action={updateJobAction.bind(null, job.id)} job={job} cancelHref={`/jobs/${job.id}`}
+          usedCountries={facets.countries} usedRoles={facets.roles} />
       </div>
     );
   }

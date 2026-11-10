@@ -27,7 +27,7 @@ function Card({ job, onMove }: { job: Job; onMove: (id: string, s: Status) => vo
       <label className="sr-only" htmlFor={`move-${job.id}`}>Move {job.company}</label>
       <select id={`move-${job.id}`} value={job.status} onChange={(e) => onMove(job.id, e.target.value as Status)}
         onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
-        className="mt-2 w-full rounded-md border border-line bg-surface px-1 py-1 text-xs text-muted">
+        className="mt-2 block w-full max-w-full truncate rounded-md border border-line bg-surface px-1 py-1 text-xs text-muted">
         {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
       </select>
     </div>

@@ -306,10 +306,11 @@ export async function getStats(db: Db, range: { from?: string; to?: string } = {
 }
 
 /** Distinct values already used, for filter dropdowns. */
-export async function listFacets(db: Db): Promise<{ countries: string[]; sources: string[] }> {
+export async function listFacets(db: Db): Promise<{ countries: string[]; sources: string[]; roles: string[] }> {
   const c = await db.query<{ v: string }>(`select distinct country as v from jobs where country is not null order by 1`);
   const s = await db.query<{ v: string }>(`select distinct source as v from jobs where source is not null order by 1`);
-  return { countries: c.map((r) => r.v), sources: s.map((r) => r.v) };
+  const r = await db.query<{ v: string }>(`select role as v from jobs group by role order by count(*) desc, role limit 30`);
+  return { countries: c.map((x) => x.v), sources: s.map((x) => x.v), roles: r.map((x) => x.v) };
 }
 
 export function addDays(date: string, days: number): string {

@@ -20,6 +20,7 @@ function Icon({ d }: { d: string }) {
 
 export function Nav({ logout }: { logout: React.ReactNode }) {
   const path = usePathname();
+  const addHref = ITEMS.some((i) => i.href === path) ? `/new?from=${encodeURIComponent(path)}` : "/new";
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   return (
     <>
@@ -32,7 +33,7 @@ export function Nav({ logout }: { logout: React.ReactNode }) {
             <Icon d={i.icon} /> {i.label}
           </Link>
         ))}
-        <Link href="/new" className="btn btn-primary mt-3">+ Add job</Link>
+        <Link href={addHref} className="btn btn-primary mt-3">+ Add job</Link>
         <div className="mt-auto space-y-2"><ThemeToggle />{logout}</div>
       </aside>
 
@@ -54,7 +55,7 @@ export function Nav({ logout }: { logout: React.ReactNode }) {
         </div>
       </nav>
       {path !== "/new" && (
-        <Link href="/new" aria-label="Add job"
+        <Link href={addHref} aria-label="Add job"
           className="md:hidden fixed right-4 z-20 grid h-14 w-14 place-items-center rounded-full bg-accent text-accent-ink text-3xl shadow-lg"
           style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
           +

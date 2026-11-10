@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { FormState } from "@/app/actions";
+import { COMMON_ROLES, COUNTRY_GROUPS } from "@/lib/options";
+import { Combo, type ComboGroup } from "./Combo";
 import { STATUSES, STATUS_LABEL, WORK_MODES, YES_NO, type Job } from "@/lib/schema";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
@@ -10,7 +12,7 @@ function Field({ name, label, job, type = "text", required, placeholder }: {
   name: keyof Job; label: string; job?: Job; type?: string; required?: boolean; placeholder?: string;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <label className="label" htmlFor={name}>{label}</label>
       <input id={name} name={name} type={type} className="input" required={required} placeholder={placeholder}
         defaultValue={(job?.[name] as string | null) ?? ""} />
@@ -22,7 +24,7 @@ function Select({ name, label, options, value, blank }: {
   name: string; label: string; options: readonly string[]; value?: string | null; blank?: boolean;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <label className="label" htmlFor={name}>{label}</label>
       <select id={name} name={name} className="input" defaultValue={value ?? (blank ? "" : options[0])}>
         {blank && <option value="">Not set</option>}
@@ -34,7 +36,16 @@ function Select({ name, label, options, value, blank }: {
   );
 }
 
-export function JobForm({ action, job, cancelHref }: { action: Action; job?: Job; cancelHref: string }) {
+/** Add values you've used before to the suggestion list, so they show up next time. */
+function withUsed(groups: ComboGroup[], used: string[]): ComboGroup[] {
+  const known = new Set(groups.flatMap((g) => g.items.map((i) => i.toLowerCase())));
+  const extra = used.filter((u) => u && !known.has(u.toLowerCase()));
+  return extra.length ? [{ group: "Used before", items: extra }, ...groups] : groups;
+}
+
+export function JobForm({ action, job, cancelHref, usedCountries = [], usedRoles = [] }: {
+  action: Action; job?: Job; cancelHref: string; usedCountries?: string[]; usedRoles?: string[];
+}) {
   const [state, setState] = useState<FormState>(undefined);
   const [pending, start] = useTransition();
   // Submitted by hand (not through the form's action) so the fields keep
@@ -49,9 +60,11 @@ export function JobForm({ action, job, cancelHref }: { action: Action; job?: Job
       <div className="card grid gap-4 p-4 sm:grid-cols-2">
         <div className="sm:col-span-2"><Field name="url" label="Link to the job post" job={job} type="url" placeholder="https://" /></div>
         <Field name="company" label="Company" job={job} required />
-        <Field name="role" label="Role" job={job} required />
+        <Combo name="role" label="Role" required defaultValue={job?.role} placeholder="Pick or type a role"
+          groups={withUsed([{ group: "Common roles", items: COMMON_ROLES }], usedRoles)} />
         {!job && <Select name="status" label="Status" options={STATUSES} />}
-        <Field name="country" label="Country" job={job} placeholder="Germany, Japan, Remote…" />
+        <Combo name="country" label="Country" defaultValue={job?.country} placeholder="Pick or type a country"
+          groups={withUsed(COUNTRY_GROUPS, usedCountries)} />
         <Select name="work_mode" label="Work mode" options={WORK_MODES} value={job?.work_mode} blank />
         <Select name="relocation" label="Relocation support" options={YES_NO} value={job?.relocation ?? "unknown"} />
         <Select name="visa_support" label="Visa support" options={YES_NO} value={job?.visa_support ?? "unknown"} />
