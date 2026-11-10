@@ -220,22 +220,24 @@ export type TodayView = {
 export async function dueFollowups(db: Db, daysAhead = 0): Promise<TodayView> {
   const day = await today(db);
   const ahead = Math.min(Math.max(Math.trunc(daysAhead) || 0, 0), 60);
-  const followups = await db.query<Job>(
+  const [followups, interviews, stale_saved] = await Promise.all([
+  db.query<Job>(
     `select ${JOB_COLS} from jobs
      where follow_up_on is not null and follow_up_on <= $1::date + $2::int
        and status in ('saved','applied','interview')
      order by follow_up_on, company`,
     [day, ahead],
-  );
-  const interviews = await db.query<Job>(
+  ),
+  db.query<Job>(
     `select ${JOB_COLS} from jobs where status = 'interview' order by jobs.updated_at desc`,
-  );
-  const stale_saved = await db.query<Job>(
+  ),
+  db.query<Job>(
     `select ${JOB_COLS} from jobs
      where status = 'saved' and (created_at at time zone $2)::date <= $1::date - ${STALE_SAVED_DAYS}
      order by jobs.created_at`,
     [day, TZ()],
-  );
+  ),
+  ]);
   return { today: day, followups, interviews, stale_saved };
 }
 
@@ -263,37 +265,39 @@ export async function getStats(db: Db, range: { from?: string; to?: string } = {
   const w = where.length ? "where " + where.join(" and ") : "";
   const replied = `status in ('interview','offer','rejected')`;
 
-  const statusRows = await db.query<{ status: Status; n: number }>(
+  const [statusRows, totals, countries, weeks] = await Promise.all([
+  db.query<{ status: Status; n: number }>(
     `select status, count(*)::int as n from jobs ${w} group by status`,
     params,
-  );
-  const by_status = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<Status, number>;
-  for (const r of statusRows) by_status[r.status] = Number(r.n);
-  const total = Object.values(by_status).reduce((a, b) => a + b, 0);
-
-  const totals = await db.query<{ applied: number; replied: number }>(
+  ),
+  db.query<{ applied: number; replied: number }>(
     `select count(*) filter (where applied_on is not null)::int as applied,
             count(*) filter (where applied_on is not null and ${replied})::int as replied
      from jobs ${w}`,
     params,
-  );
-  const applied_total = Number(totals[0].applied);
-  const replied_total = Number(totals[0].replied);
-
-  const countries = await db.query<{ country: string; applied: number; replied: number }>(
+  ),
+  db.query<{ country: string; applied: number; replied: number }>(
     `select coalesce(country, 'Unknown') as country,
             count(*)::int as applied,
             count(*) filter (where ${replied})::int as replied
      from jobs ${w ? w + " and" : "where"} applied_on is not null
      group by 1 order by applied desc, country limit 8`,
     params,
-  );
-  const weeks = await db.query<{ week_start: string; applied: number }>(
+  ),
+  db.query<{ week_start: string; applied: number }>(
     `select date_trunc('week', applied_on)::date::text as week_start, count(*)::int as applied
      from jobs ${w ? w + " and" : "where"} applied_on is not null
      group by 1 order by 1 desc limit 12`,
     params,
-  );
+  ),
+  ]);
+  const by_status = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<Status, number>;
+  for (const r of statusRows) by_status[r.status] = Number(r.n);
+  const total = Object.values(by_status).reduce((a, b) => a + b, 0);
+
+  const applied_total = Number(totals[0].applied);
+  const replied_total = Number(totals[0].replied);
+
   return {
     total,
     by_status,
@@ -307,9 +311,11 @@ export async function getStats(db: Db, range: { from?: string; to?: string } = {
 
 /** Distinct values already used, for filter dropdowns. */
 export async function listFacets(db: Db): Promise<{ countries: string[]; sources: string[]; roles: string[] }> {
-  const c = await db.query<{ v: string }>(`select distinct country as v from jobs where country is not null order by 1`);
-  const s = await db.query<{ v: string }>(`select distinct source as v from jobs where source is not null order by 1`);
-  const r = await db.query<{ v: string }>(`select role as v from jobs group by role order by count(*) desc, role limit 30`);
+  const [c, s, r] = await Promise.all([
+    db.query<{ v: string }>(`select distinct country as v from jobs where country is not null order by 1`),
+    db.query<{ v: string }>(`select distinct source as v from jobs where source is not null order by 1`),
+    db.query<{ v: string }>(`select role as v from jobs group by role order by count(*) desc, role limit 30`),
+  ]);
   return { countries: c.map((x) => x.v), sources: s.map((x) => x.v), roles: r.map((x) => x.v) };
 }
 
