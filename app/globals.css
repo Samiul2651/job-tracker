@@ -13,8 +13,24 @@
   --warn: #c2620a;
   --bad: #c92a2a;
 }
+/* Dark colours. Used when the toggle says dark, or when the device is dark and the toggle was never used. */
+:root[data-theme="dark"] {
+  --bg: #141413;
+  --surface: #1e1e1c;
+  --line: #33332f;
+  --ink: #ececea;
+  --muted: #a3a29c;
+  --accent: #8ea2ff;
+  --accent-ink: #10131f;
+  --accent-soft: #252b47;
+  --good: #69db7c;
+  --warn: #ffa94d;
+  --bad: #ff8787;
+  color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #141413;
     --surface: #1e1e1c;
     --line: #33332f;

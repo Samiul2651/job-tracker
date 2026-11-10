@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { RegisterSW } from "@/components/RegisterSW";
 
@@ -20,9 +21,12 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The theme toggle saves its choice in a cookie, so the right colours load at once.
+  const saved = (await cookies()).get("jt_theme")?.value;
+  const theme = saved === "dark" || saved === "light" ? saved : undefined;
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" data-theme={theme}>
       <body className="min-h-full">
         {children}
         <RegisterSW />

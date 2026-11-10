@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "./ThemeToggle";
 
 const ITEMS = [
   { href: "/", label: "Today", icon: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
@@ -32,8 +33,14 @@ export function Nav({ logout }: { logout: React.ReactNode }) {
           </Link>
         ))}
         <Link href="/new" className="btn btn-primary mt-3">+ Add job</Link>
-        <div className="mt-auto">{logout}</div>
+        <div className="mt-auto space-y-2"><ThemeToggle />{logout}</div>
       </aside>
+
+      {/* Phone: small top bar with the theme toggle and log out */}
+      <div className="md:hidden flex items-center justify-between gap-2 px-4 pt-3">
+        <span className="font-bold">Job Tracker</span>
+        <div className="flex items-center gap-2 [&_button]:w-auto"><ThemeToggle compact />{logout}</div>
+      </div>
 
       {/* Phone: bottom tabs and a floating add button */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-line bg-surface safe-bottom">

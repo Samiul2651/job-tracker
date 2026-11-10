@@ -1,11 +1,13 @@
 "use client";
 import { useActionState } from "react";
 import { loginAction } from "@/app/actions";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(loginAction, undefined);
   return (
     <main className="min-h-dvh grid place-items-center p-6">
+      <div className="fixed right-4 top-4"><ThemeToggle compact /></div>
       <form action={action} className="card w-full max-w-sm p-6 space-y-4">
         <h1 className="text-xl font-bold">Job Tracker</h1>
         <div>
