@@ -17,7 +17,7 @@ export function FollowUpButtons({ id }: { id: string }) {
 export function MarkAppliedButton({ id }: { id: string }) {
   const [pending, start] = useTransition();
   return (
-    <button className="btn btn-sm btn-primary shrink-0" disabled={pending}
-      onClick={() => start(async () => { await setStatusAction(id, "applied"); })}>Applied</button>
+    <button className="btn btn-sm btn-primary shrink-0" disabled={pending} title="Move this job to Applied"
+      onClick={() => start(async () => { await setStatusAction(id, "applied"); })}>Mark applied</button>
   );
 }
